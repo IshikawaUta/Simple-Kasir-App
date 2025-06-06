@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">Dashboard Kasir</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Transaksi Terbaru</h5>
+            </div>
+            <div class="card-body">
+                {% if latest_sales %}
+                <ul class="list-group list-group-flush">
+                    {% for sale in latest_sales %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong class="text-success">Total: Rp{{ "{:,.2f}".format(sale.total_amount) }}</strong>
+                            <br>
+                            <small class="text-muted">{{ sale.sale_date.strftime('%d-%m-%Y %H:%M') }}</small>
+                            <br>
+                            <small class="text-secondary">
+                                {% for item in sale.products %}
+                                    {{ item.name }} ({{ item.quantity }}{{ item.get('unit', '') }}){% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                                {% if sale.get('cashier_username') %}
+                                    <br>Kasir: {{ sale.cashier_username }}
+                                {% endif %}
+                                {% if sale.get('customer_name') %}
+                                    <br>Pelanggan: {{ sale.customer_name }}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center mt-3">Belum ada transaksi penjualan.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Aksi Cepat</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('sell') }}" class="list-group-item list-group-item-action list-group-item-primary rounded mb-2">Mulai Penjualan Baru <i class="fas fa-shopping-cart ms-2"></i></a>
+                    <a href="{{ url_for('products') }}" class="list-group-item list-group-item-action list-group-item-info rounded mb-2">Lihat Daftar Produk <i class="fas fa-box-open ms-2"></i></a>
+                    {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('add_product') }}" class="list-group-item list-group-item-action list-group-item-success rounded mb-2">Tambah Produk Baru <i class="fas fa-plus-circle ms-2"></i></a>
+                        <a href="{{ url_for('sales_report') }}" class="list-group-item list-group-item-action list-group-item-warning rounded mb-2">Lihat Riwayat Penjualan <i class="fas fa-chart-line ms-2"></i></a>
+                        <a href="{{ url_for('manage_users') }}" class="list-group-item list-group-item-action list-group-item-danger rounded mb-2">Kelola Pengguna <i class="fas fa-users-cog ms-2"></i></a>
+                        <a href="{{ url_for('customers') }}" class="list-group-item list-group-item-action list-group-item-secondary rounded">Kelola Pelanggan <i class="fas fa-user-friends ms-2"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

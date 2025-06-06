@@ -1,0 +1,229 @@
+/* static/css/style.css */
+
+body {
+    font-family: 'Inter', sans-serif; /* Menggunakan font Inter */
+    background: linear-gradient(to right, #ece9e6, #ffffff); /* Gradasi latar belakang lembut */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    background-color: #4f46e5 !important; /* Warna primer yang lebih menarik */
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand, .nav-link, .dropdown-item {
+    color: #fff !important; /* Warna teks putih untuk navbar */
+    font-weight: 500;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.nav-link:hover, .dropdown-item:hover {
+    color: #e0e0e0 !important;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+}
+
+.dropdown-menu {
+    background-color: #4f46e5; /* Warna dropdown yang sama dengan navbar */
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.container-main {
+    flex-grow: 1;
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+}
+
+.card-header {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-primary {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.btn-primary:hover {
+    background-color: #3b33c1;
+    border-color: #3b33c1;
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background-color: #10b981;
+    border-color: #10b981;
+}
+
+.btn-success:hover {
+    background-color: #0d9b6d;
+    border-color: #0d9b6d;
+    transform: translateY(-1px);
+}
+
+.btn-warning {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    color: #fff;
+}
+
+.btn-warning:hover {
+    background-color: #d1820a;
+    border-color: #d1820a;
+}
+
+.btn-danger {
+    background-color: #ef4444;
+    border-color: #ef4444;
+}
+
+.btn-danger:hover {
+    background-color: #d82e2e;
+    border-color: #d82e2e;
+}
+
+.btn-info {
+    background-color: #0ea5e9;
+    border-color: #0ea5e9;
+    color: #fff;
+}
+
+.btn-info:hover {
+    background-color: #0b8ecb;
+    border-color: #0b8ecb;
+}
+
+.btn-secondary {
+    background-color: #6b7280;
+    border-color: #6b7280;
+}
+
+.btn-secondary:hover {
+    background-color: #555c67;
+    border-color: #555c67;
+}
+
+.table {
+    border-radius: 12px;
+    overflow: hidden; /* Penting untuk rounded corners pada table */
+}
+
+.table thead {
+    background-color: #e0e7ff; /* Warna header table yang lembut */
+    color: #4f46e5;
+}
+
+.table tbody tr:hover {
+    background-color: #f3f4f6;
+}
+
+.list-group-item {
+    border-radius: 8px;
+    margin-bottom: 5px;
+    border: 1px solid #e2e8f0;
+    transition: background-color 0.1s ease;
+}
+
+.list-group-item:hover {
+    background-color: #f3f4f6;
+}
+
+.alert {
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+/* Specific styles for sell.html product list */
+.list-group-item.product-item {
+    cursor: pointer;
+}
+
+.list-group-item.product-item:hover {
+    background-color: #e0e7ff; /* Warna hover yang lebih menarik */
+    border-color: #4f46e5;
+}
+
+/* Struk (receipt.html) styling */
+.receipt-container {
+    max-width: 380px; /* Lebar sedikit lebih besar */
+    margin: 20px auto;
+    border: none;
+    padding: 25px; /* Padding lebih banyak */
+    background-color: #fff;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Bayangan lebih dalam */
+    border-radius: 12px; /* Sudut lebih membulat */
+}
+
+.receipt-header h5 {
+    color: #4f46e5; /* Sesuaikan warna header struk */
+    font-size: 1.6em;
+    font-weight: 700;
+}
+
+.receipt-details p {
+    margin-bottom: 4px;
+    font-size: 0.9em;
+}
+
+.item-list {
+    margin: 20px 0;
+    border-top: 2px dashed #a7a7a7; /* Garis putus-putus lebih terlihat */
+    border-bottom: 2px dashed #a7a7a7;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.item-list li {
+    padding: 5px 0;
+}
+
+.item-list .item-qty-price {
+    font-size: 0.85em;
+    color: #495057;
+}
+
+.total-section {
+    font-size: 1.5em;
+    padding-top: 15px;
+    border-top: 3px solid #343a40; /* Garis tebal untuk total */
+}
+
+.thank-you {
+    margin-top: 25px;
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
+.print-button-container .btn {
+    padding: 10px 25px;
+    font-size: 1.1em;
+}

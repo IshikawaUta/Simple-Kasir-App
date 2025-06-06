@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">Riwayat Penjualan</h2>
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light text-primary">
+        <h5 class="mb-0">Filter Laporan</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('sales_report') }}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="start_date" class="form-label text-muted">Dari Tanggal:</label>
+                    <input type="date" class="form-control rounded-pill p-2" id="start_date" name="start_date" value="{{ start_date if start_date else '' }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="end_date" class="form-label text-muted">Sampai Tanggal:</label>
+                    <input type="date" class="form-control rounded-pill p-2" id="end_date" name="end_date" value="{{ end_date if end_date else '' }}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 me-2">Filter</button>
+                    <a href="{{ url_for('sales_report') }}" class="btn btn-secondary rounded-pill px-4 py-2">Reset Filter</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if sales %}
+    <div class="card shadow-sm mt-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th class="py-3 px-4">ID Transaksi</th>
+                            <th class="py-3 px-4">Tanggal Penjualan</th>
+                            <th class="py-3 px-4">Kasir</th>
+                            <th class="py-3 px-4">Pelanggan</th>
+                            <th class="py-3 px-4">Produk</th>
+                            <th class="py-3 px-4">Total</th>
+                            <th class="py-3 px-4">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td class="py-3 px-4"><small class="text-muted">{{ sale._id }}</small></td>
+                            <td class="py-3 px-4">{{ sale.sale_date.strftime('%d-%m-%Y %H:%M') }}</td>
+                            <td class="py-3 px-4">{{ sale.get('cashier_username', 'Tidak Diketahui') }}</td>
+                            <td class="py-3 px-4">{{ sale.get('customer_name', 'Umum') }}</td>
+                            <td class="py-3 px-4">
+                                <ul class="list-unstyled mb-0 small">
+                                    {% for item in sale.products %}
+                                        <li>{{ item.name }} ({{ item.quantity }} {{ item.get('unit', 'pcs') }})</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="py-3 px-4 text-success fw-bold">Rp{{ "{:,.2f}".format(sale.total_amount) }}</td>
+                            <td class="py-3 px-4">
+                                <a href="{{ url_for('view_receipt', sale_id=sale._id) }}" target="_blank" class="btn btn-sm btn-info">Lihat Struk</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <p class="text-muted text-center mt-4 p-3 border rounded-pill">Tidak ada transaksi penjualan dalam periode ini.</p>
+{% endif %}
+
+{% endblock %}

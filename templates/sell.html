@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">Halaman Penjualan</h2>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Daftar Produk</h5>
+            </div>
+            <div class="card-body">
+                <div class="input-group mb-3 shadow-sm rounded-pill overflow-hidden">
+                    <input type="text" class="form-control border-0 px-3 py-2" id="productSearch" placeholder="Cari produk...">
+                    <button class="btn btn-outline-secondary border-0 text-muted" type="button" id="clearSearch">Clear</button>
+                </div>
+                <div class="list-group" id="productList">
+                    {% for product in products %}
+                    <button type="button" class="list-group-item list-group-item-action product-item d-flex justify-content-between align-items-center mb-2" 
+                            data-product-id="{{ product._id }}" 
+                            data-product-name="{{ product.name }}" 
+                            data-product-price="{{ product.price }}" 
+                            data-product-stock="{{ product.stock }}"
+                            data-product-unit="{{ product.get('unit', 'pcs') }}" {# Ini benar untuk Jinja2 render awal #}
+                            onclick="addToCart('{{ product._id }}', '{{ product.name }}', {{ product.price }}, {{ product.stock }}, '{{ product.get('unit', 'pcs') }}')"> {# Ini juga benar #}
+                        <div>
+                            <strong class="text-dark">{{ product.name }}</strong> 
+                            <span class="badge bg-secondary ms-2">{{ product.get('unit', 'pcs') }}</span>
+                            <br>
+                            <small class="text-muted">Rp{{ "{:,.2f}".format(product.price) }}</small>
+                        </div>
+                        <span class="badge bg-success rounded-pill p-2">Stok: {{ product.stock }}</span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Keranjang Belanja</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="customerSelect" class="form-label text-muted">Pilih Pelanggan (Opsional)</label>
+                    <select class="form-select rounded-pill p-2" id="customerSelect" name="customer_id">
+                        <option value="none">-- Tanpa Pelanggan --</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer._id }}">{{ customer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <ul id="cart-list" class="list-group mb-3">
+                    <li class="list-group-item text-muted text-center" id="empty-cart-message">Keranjang kosong. Tambahkan produk.</li>
+                </ul>
+                <h4 class="text-end fw-bold text-primary">Total: <span id="cart-total">Rp0.00</span></h4>
+                
+                <form action="{{ url_for('sell') }}" method="POST" id="sell-form">
+                    <input type="hidden" name="cart_items" id="cart-items-input">
+                    <input type="hidden" name="customer_id" id="selected-customer-id">
+                    <button type="submit" class="btn btn-lg btn-success w-100 mt-3 rounded-pill p-3 fw-bold" id="checkout-button" disabled>Proses Pembayaran</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let cart = {}; // Menyimpan item di keranjang {product_id: {name, price, quantity, stock, unit}}
+    let total = 0;
+
+    const cartList = document.getElementById('cart-list');
+    const cartTotal = document.getElementById('cart-total');
+    const emptyCartMessage = document.getElementById('empty-cart-message');
+    const cartItemsInput = document.getElementById('cart-items-input');
+    const checkoutButton = document.getElementById('checkout-button');
+    const customerSelect = document.getElementById('customerSelect');
+    const selectedCustomerIdInput = document.getElementById('selected-customer-id');
+    const productSearchInput = document.getElementById('productSearch');
+    const productListContainer = document.getElementById('productList');
+    const productItems = document.querySelectorAll('.product-item');
+    const clearSearchButton = document.getElementById('clearSearch');
+
+    function updateCartDisplay() {
+        cartList.innerHTML = '';
+        total = 0;
+
+        if (Object.keys(cart).length === 0) {
+            emptyCartMessage.style.display = 'block';
+            checkoutButton.disabled = true;
+        } else {
+            emptyCartMessage.style.display = 'none';
+            checkoutButton.disabled = false;
+            for (const productId in cart) {
+                const item = cart[productId];
+                const subtotal = item.price * item.quantity;
+                total += subtotal;
+
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+                li.innerHTML = `
+                    <div>
+                        <strong class="text-dark">${item.name}</strong> 
+                        <span class="badge bg-secondary rounded-pill ms-1">${item.quantity}x</span>
+                        <span class="badge bg-info">${item.unit}</span> {# <--- PERBAIKAN DI SINI, item.unit kini dari JS object #}
+                        <br>
+                        <small class="text-muted">Rp${item.price.toLocaleString('id-ID', { minimumFractionDigits: 2 })} / ${item.unit}</small> {# <--- PERBAIKAN DI SINI #}
+                    </div>
+                    <div>
+                        <strong class="text-primary">Rp${subtotal.toLocaleString('id-ID', { minimumFractionDigits: 2 })}</strong>
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-2 rounded-circle" onclick="removeFromCart('${productId}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+                cartList.appendChild(li);
+            }
+        }
+        cartTotal.textContent = `Rp${total.toLocaleString('id-ID', { minimumFractionDigits: 2 })}`;
+
+        const itemsForFlask = Object.keys(cart).map(id => ({
+            id: id,
+            quantity: cart[id].quantity
+        }));
+        cartItemsInput.value = JSON.stringify(itemsForFlask);
+    }
+
+    function addToCart(productId, name, price, stock, unit) {
+        if (cart[productId]) {
+            if (cart[productId].quantity < stock) {
+                cart[productId].quantity += 1;
+                showFlashMessage(`Ditambahkan: ${name} (${cart[productId].quantity}x)`, 'info');
+            } else {
+                showFlashMessage(`Stok ${name} hanya tersedia ${stock} ${unit}.`, 'warning');
+                return;
+            }
+        } else {
+            if (stock > 0) {
+                cart[productId] = {
+                    name: name,
+                    price: price,
+                    quantity: 1,
+                    stock: stock,
+                    unit: unit
+                };
+                showFlashMessage(`Produk ditambahkan: ${name}`, 'success');
+            } else {
+                showFlashMessage(`${name} sedang tidak tersedia (stok kosong).`, 'danger');
+                return;
+            }
+        }
+        updateCartDisplay();
+    }
+
+    function removeFromCart(productId) {
+        if (cart[productId]) {
+            if (cart[productId].quantity > 1) {
+                cart[productId].quantity -= 1;
+                showFlashMessage(`Dikurangi: ${cart[productId].name} (${cart[productId].quantity}x)`, 'info');
+            } else {
+                showFlashMessage(`Dihapus dari keranjang: ${cart[productId].name}`, 'danger');
+                delete cart[productId];
+            }
+        }
+        updateCartDisplay();
+    }
+
+    function showFlashMessage(message, category) {
+        const alertContainer = document.querySelector('.container.container-main');
+        const alertHtml = `
+            <div class="alert alert-${category} alert-dismissible fade show rounded-pill" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        const div = document.createElement('div');
+        div.innerHTML = alertHtml;
+        alertContainer.prepend(div.firstElementChild);
+        
+        setTimeout(() => {
+            const alert = div.firstElementChild;
+            if (alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    }
+
+    customerSelect.addEventListener('change', function() {
+        selectedCustomerIdInput.value = this.value;
+    });
+
+    productSearchInput.addEventListener('keyup', function() {
+        const searchTerm = productSearchInput.value.toLowerCase();
+        productItems.forEach(item => {
+            const productName = item.dataset.productName.toLowerCase();
+            const productUnit = item.dataset.productUnit.toLowerCase();
+            if (productName.includes(searchTerm) || productUnit.includes(searchTerm)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+    clearSearchButton.addEventListener('click', function() {
+        productSearchInput.value = '';
+        productItems.forEach(item => {
+            item.style.display = 'flex';
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', updateCartDisplay);
+</script>
+{% endblock %}

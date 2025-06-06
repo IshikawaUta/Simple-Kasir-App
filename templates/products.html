@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">Daftar Produk</h2>
+{% if current_user.role == 'admin' %}
+    <a href="{{ url_for('add_product') }}" class="btn btn-primary mb-3">Tambah Produk Baru <i class="fas fa-plus-circle ms-2"></i></a>
+{% endif %}
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-4">Nama Produk</th>
+                        <th class="py-3 px-4">Harga</th>
+                        <th class="py-3 px-4">Stok</th>
+                        <th class="py-3 px-4">Unit</th>
+                        <th class="py-3 px-4">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if products %}
+                        {% for product in products %}
+                        <tr>
+                            <td class="py-3 px-4">{{ product.name }}</td>
+                            <td class="py-3 px-4">Rp{{ "{:,.2f}".format(product.price) }}</td>
+                            <td class="py-3 px-4">{{ product.stock }}</td>
+                            <td class="py-3 px-4">{{ product.get('unit', '-') }}</td>
+                            <td class="py-3 px-4">
+                                {% if current_user.role == 'admin' %}
+                                    <a href="{{ url_for('edit_product', id=product._id) }}" class="btn btn-sm btn-warning me-1">Edit</a>
+                                    <a href="{{ url_for('add_stock', id=product._id) }}" class="btn btn-sm btn-info me-1">Tambah Stok</a>
+                                    <form action="{{ url_for('delete_product', id=product._id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                    </form>
+                                {% else %}
+                                    <span class="text-muted small">Tidak ada aksi</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Belum ada produk. Silakan tambahkan produk baru.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

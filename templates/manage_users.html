@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">Kelola Pengguna</h2>
+<a href="{{ url_for('register') }}" class="btn btn-primary mb-3">Tambah Pengguna Baru <i class="fas fa-user-plus ms-2"></i></a>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th class="py-3 px-4">Username</th>
+                        <th class="py-3 px-4">Peran</th>
+                        <th class="py-3 px-4">Tanggal Dibuat</th>
+                        <th class="py-3 px-4">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if users %}
+                        {% for user in users %}
+                        <tr>
+                            <td class="py-3 px-4">{{ user.username }}</td>
+                            <td class="py-3 px-4"><span class="badge rounded-pill {{ 'bg-danger' if user.role == 'admin' else 'bg-info' }} p-2">{{ user.role.capitalize() }}</span></td>
+                            <td class="py-3 px-4">{{ user.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+                            <td class="py-3 px-4">
+                                {% if user._id != current_user.user_data._id %}
+                                <form action="{{ url_for('delete_user', id=user._id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menghapus pengguna {{ user.username }}?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Hapus</button>
+                                </form>
+                                {% else %}
+                                <span class="text-muted small">Tidak bisa dihapus</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Belum ada pengguna terdaftar.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

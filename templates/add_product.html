@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">{{ 'Edit Produk' if product else 'Tambah Produk Baru' }}</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="name" class="form-label text-muted">Nama Produk</label>
+                <input type="text" class="form-control rounded-pill p-2" id="name" name="name" value="{{ product.name | default('') }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="price" class="form-label text-muted">Harga</label>
+                <input type="number" step="0.01" class="form-control rounded-pill p-2" id="price" name="price" value="{{ product.price | default('') }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="stock" class="form-label text-muted">Stok</label>
+                <input type="number" class="form-control rounded-pill p-2" id="stock" name="stock" value="{{ product.stock | default('') }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="unit" class="form-label text-muted">Unit (ex: pcs, kg, liter)</label>
+                <input type="text" class="form-control rounded-pill p-2" id="unit" name="unit" value="{{ product.unit | default('') }}" placeholder="pcs, kg, liter, dll.">
+            </div>
+            <button type="submit" class="btn btn-success mt-3 rounded-pill px-4 py-2">{{ 'Update Produk' if product else 'Tambah Produk' }}</button>
+            <a href="{{ url_for('products') }}" class="btn btn-secondary mt-3 rounded-pill px-4 py-2 ms-2">Batal</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

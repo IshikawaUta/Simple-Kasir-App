@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">Tambah Stok untuk <span class="text-info">{{ product.name }}</span></h2>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <p class="h5 text-muted mb-4"><strong>Stok Saat Ini:</strong> <span class="text-success">{{ product.stock }} {{ product.get('unit', 'pcs') }}</span></p>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label text-muted">Kuantitas Tambahan</label>
+                        <input type="number" class="form-control rounded-pill p-2" id="quantity" name="quantity" min="1" required>
+                    </div>
+                    <button type="submit" class="btn btn-success mt-3 rounded-pill px-4 py-2">Tambah Stok</button>
+                    <a href="{{ url_for('products') }}" class="btn btn-secondary mt-3 rounded-pill px-4 py-2 ms-2">Batal</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

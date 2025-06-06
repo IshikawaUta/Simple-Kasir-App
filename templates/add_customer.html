@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4 text-primary">{{ 'Edit Pelanggan' if customer else 'Tambah Pelanggan Baru' }}</h2>
+
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+        <form method="POST">
+            <div class="mb-3">
+                <label for="name" class="form-label text-muted">Nama Pelanggan</label>
+                <input type="text" class="form-control rounded-pill p-2" id="name" name="name" value="{{ customer.name | default('') }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="phone" class="form-label text-muted">Telepon (Opsional)</label>
+                <input type="text" class="form-control rounded-pill p-2" id="phone" name="phone" value="{{ customer.phone | default('') }}">
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label text-muted">Email (Opsional)</label>
+                <input type="email" class="form-control rounded-pill p-2" id="email" name="email" value="{{ customer.email | default('') }}">
+            </div>
+            <button type="submit" class="btn btn-success mt-3 rounded-pill px-4 py-2">{{ 'Update Pelanggan' if customer else 'Tambah Pelanggan' }}</button>
+            <a href="{{ url_for('customers') }}" class="btn btn-secondary mt-3 rounded-pill px-4 py-2 ms-2">Batal</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

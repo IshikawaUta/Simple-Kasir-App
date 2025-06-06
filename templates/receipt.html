@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Struk Pembelian #{{ sale._id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', monospace;
+            font-size: 0.9em;
+            margin: 0;
+            background-color: #f0f2f5; /* Latar belakang abu-abu terang */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .receipt-container {
+            max-width: 380px;
+            width: 100%; /* Memastikan responsif */
+            border: none;
+            padding: 25px;
+            background-color: #fff;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            line-height: 1.4; /* Meningkatkan keterbacaan */
+        }
+        .receipt-header, .receipt-footer {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .receipt-header h5 {
+            color: #4f46e5;
+            font-size: 1.8em;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .receipt-header p {
+            margin-bottom: 3px;
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+        .receipt-details {
+            font-size: 0.8em;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #ced4da;
+            padding-bottom: 12px;
+        }
+        .receipt-details p {
+            margin-bottom: 6px;
+        }
+        .item-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            border-top: 2px dashed #a7a7a7;
+            border-bottom: 2px dashed #a7a7a7;
+            padding-top: 15px;
+            padding-bottom: 15px;
+        }
+        .item-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .item-list .item-qty-price {
+            font-size: 0.85em;
+            color: #495057;
+            margin-left: 10px;
+        }
+        .total-section {
+            text-align: right;
+            font-weight: bold;
+            font-size: 1.6em; /* Lebih besar untuk total */
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 3px solid #343a40;
+            color: #10b981; /* Warna hijau untuk total */
+        }
+        .thank-you {
+            margin-top: 25px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .print-button-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .btn-receipt {
+            padding: 10px 25px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .btn-receipt:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        @media print {
+            .print-button-container, .navbar, .container.mt-4 .alert {
+                display: none;
+            }
+            body {
+                margin: 0;
+                background-color: #fff;
+                min-height: auto;
+            }
+            .receipt-container {
+                border: none;
+                padding: 0;
+                max-width: none;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <h5>TOKO EKA SAPUTRA</h5>
+            <p>Jalan Raya Binong No. 45, Kota Tangerang</p>
+            <p>Telp: 0895701060973</p>
+            <hr class="my-2">
+            <p class="h6 text-uppercase fw-bold">Struk Pembelian</p>
+        </div>
+        <div class="receipt-details">
+            <p class="mb-0">Tanggal: <span class="fw-bold">{{ sale.sale_date.strftime('%d-%m-%Y %H:%M') }}</span></p>
+            <p class="mb-0">Kasir: <span class="fw-bold">{{ sale.get('cashier_username', 'N/A') }}</span></p>
+            <p class="mb-0">Pelanggan: <span class="fw-bold">{{ sale.get('customer_name', 'Umum') }}</span></p>
+            <p class="mb-0">ID Transaksi: <span class="fw-bold small">{{ sale._id }}</span></p>
+        </div>
+        
+        <ul class="item-list">
+            {% for item in sale.products %}
+            <li class="d-flex justify-content-between align-items-baseline">
+                <span class="fw-bold">{{ item.name }}</span>
+                <span class="text-end fw-bold">Rp{{ "{:,.2f}".format(item.price) }}</span>
+            </li>
+            <li class="d-flex justify-content-between align-items-baseline item-qty-price">
+                <span>{{ item.quantity }} {{ item.get('unit', 'pcs') }}</span>
+                <span class="text-end">Rp{{ "{:,.2f}".format(item.subtotal) }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <div class="total-section">
+            <span class="me-2 text-dark">TOTAL:</span>
+            <span>Rp{{ "{:,.2f}".format(sale.total_amount) }}</span>
+        </div>
+
+        <div class="receipt-footer">
+            <p class="thank-you text-center">Terima kasih atas kunjungan Anda!</p>
+            <p style="font-size: 0.7em; text-align: center; color: #adb5bd;">Layanan Pelanggan: WA 0895701060973</p>
+        </div>
+    </div>
+
+    <div class="print-button-container">
+        <button onclick="window.print()" class="btn btn-success btn-receipt me-2">Cetak Struk</button>
+        <a href="{{ url_for('sell') }}" class="btn btn-secondary btn-receipt">Kembali ke Penjualan</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
