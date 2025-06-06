@@ -1,6 +1,7 @@
 # wsgi.py
-from app import app as application # Mengimpor instance 'app' dari app.py Anda
+# Pastikan 'app' diimpor dari file 'app.py' Anda
+from app import app
 
-# Penting: Pastikan app.py Anda memiliki 'app = Flask(__name__)'
-# dan tidak ada 'if __name__ == '__main__': app.run(debug=True)' yang akan dieksekusi di sini.
-# Vercel akan menangani server WSGI sendiri.
+# Vercel akan secara otomatis mencari variabel 'app' di file ini
+# atau variabel 'handler' jika Anda menggunakan fungsi serverless.
+# Untuk Flask, kita biasanya mendefinisikan instance Flask sebagai 'app'.
