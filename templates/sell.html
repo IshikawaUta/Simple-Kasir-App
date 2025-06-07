@@ -21,8 +21,8 @@
                             data-product-name="{{ product.name }}" 
                             data-product-price="{{ product.price }}" 
                             data-product-stock="{{ product.stock }}"
-                            data-product-unit="{{ product.get('unit', 'pcs') }}" {# Ini benar untuk Jinja2 render awal #}
-                            onclick="addToCart('{{ product._id }}', '{{ product.name }}', {{ product.price }}, {{ product.stock }}, '{{ product.get('unit', 'pcs') }}')"> {# Ini juga benar #}
+                            data-product-unit="{{ product.get('unit', 'pcs') }}"
+                            onclick="addToCart('{{ product._id }}', '{{ product.name }}', {{ product.price }}, {{ product.stock }}, '{{ product.get('unit', 'pcs') }}')">
                         <div>
                             <strong class="text-dark">{{ product.name }}</strong> 
                             <span class="badge bg-secondary ms-2">{{ product.get('unit', 'pcs') }}</span>
@@ -56,11 +56,31 @@
                 <ul id="cart-list" class="list-group mb-3">
                     <li class="list-group-item text-muted text-center" id="empty-cart-message">Keranjang kosong. Tambahkan produk.</li>
                 </ul>
+                
+                {# NEW: Tampilan Subtotal Sebelum Diskon #}
+                <h5 class="text-end fw-normal text-muted">Subtotal: <span id="subtotal-before-discount">Rp0.00</span></h5>
+
                 <h4 class="text-end fw-bold text-primary">Total: <span id="cart-total">Rp0.00</span></h4>
                 
+                {# Pindahkan semua input transaksi ke dalam form #}
                 <form action="{{ url_for('sell') }}" method="POST" id="sell-form">
                     <input type="hidden" name="cart_items" id="cart-items-input">
                     <input type="hidden" name="customer_id" id="selected-customer-id">
+
+                    {# NEW: Input Diskon Persentase - SEKARANG DI DALAM FORM #}
+                    <div class="mb-3">
+                        <label for="discountPercentageInput" class="form-label text-muted">Diskon (%)</label>
+                        <input type="text" class="form-control rounded-pill p-2" id="discountPercentageInput" name="discount_percentage" value="0" inputmode="numeric" pattern="[0-9,.]*">
+                    </div>
+                    {# NEW: Tampilan Jumlah Diskon - SEKARANG DI DALAM FORM #}
+                    <h5 class="text-end fw-normal text-danger">Diskon: <span id="discountAmountDisplay">Rp0.00</span></h5>
+
+                    <div class="mb-3">
+                        <label for="amountPaidInput" class="form-label text-muted">Uang Dibayar</label>
+                        <input type="text" class="form-control rounded-pill p-2" id="amountPaidInput" name="amount_paid" placeholder="Masukkan jumlah uang dibayar" required inputmode="numeric" pattern="[0-9,.]*">
+                    </div>
+                    <h4 class="text-end fw-bold text-success">Kembalian: <span id="changeDisplay">Rp0.00</span></h4>
+
                     <button type="submit" class="btn btn-lg btn-success w-100 mt-3 rounded-pill p-3 fw-bold" id="checkout-button" disabled>Proses Pembayaran</button>
                 </form>
             </div>
@@ -71,11 +91,16 @@
 
 {% block scripts %}
 <script>
-    let cart = {}; // Menyimpan item di keranjang {product_id: {name, price, quantity, stock, unit}}
-    let total = 0;
+    let cart = {}; 
+    let subtotalBeforeDiscount = 0; 
+    let discountPercentage = 0;     
+    let discountAmount = 0;         
+    let finalTotalAfterDiscount = 0; 
+    let amountPaid = 0;
+    let change = 0;
 
     const cartList = document.getElementById('cart-list');
-    const cartTotal = document.getElementById('cart-total');
+    const cartTotal = document.getElementById('cart-total'); 
     const emptyCartMessage = document.getElementById('empty-cart-message');
     const cartItemsInput = document.getElementById('cart-items-input');
     const checkoutButton = document.getElementById('checkout-button');
@@ -86,48 +111,114 @@
     const productItems = document.querySelectorAll('.product-item');
     const clearSearchButton = document.getElementById('clearSearch');
 
+    const amountPaidInput = document.getElementById('amountPaidInput');
+    const changeDisplay = document.getElementById('changeDisplay');
+    const sellForm = document.getElementById('sell-form'); 
+
+    const subtotalBeforeDiscountDisplay = document.getElementById('subtotal-before-discount'); 
+    const discountPercentageInput = document.getElementById('discountPercentageInput');     
+    const discountAmountDisplay = document.getElementById('discountAmountDisplay');         
+
+
+    function formatRupiah(number) {
+        return `Rp${number.toLocaleString('id-ID', { minimumFractionDigits: 2 })}`;
+    }
+
     function updateCartDisplay() {
         cartList.innerHTML = '';
-        total = 0;
+        subtotalBeforeDiscount = 0; 
 
         if (Object.keys(cart).length === 0) {
             emptyCartMessage.style.display = 'block';
             checkoutButton.disabled = true;
+            amountPaidInput.disabled = true;
+            amountPaidInput.value = ''; 
+            amountPaid = 0;
+            discountPercentageInput.disabled = true; 
+            discountPercentageInput.value = '0'; 
+            discountPercentage = 0;
         } else {
             emptyCartMessage.style.display = 'none';
-            checkoutButton.disabled = false;
-            for (const productId in cart) {
-                const item = cart[productId];
-                const subtotal = item.price * item.quantity;
-                total += subtotal;
-
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
-                li.innerHTML = `
-                    <div>
-                        <strong class="text-dark">${item.name}</strong> 
-                        <span class="badge bg-secondary rounded-pill ms-1">${item.quantity}x</span>
-                        <span class="badge bg-info">${item.unit}</span> {# <--- PERBAIKAN DI SINI, item.unit kini dari JS object #}
-                        <br>
-                        <small class="text-muted">Rp${item.price.toLocaleString('id-ID', { minimumFractionDigits: 2 })} / ${item.unit}</small> {# <--- PERBAIKAN DI SINI #}
-                    </div>
-                    <div>
-                        <strong class="text-primary">Rp${subtotal.toLocaleString('id-ID', { minimumFractionDigits: 2 })}</strong>
-                        <button type="button" class="btn btn-sm btn-outline-danger ms-2 rounded-circle" onclick="removeFromCart('${productId}')">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
-                cartList.appendChild(li);
-            }
+            amountPaidInput.disabled = false;
+            discountPercentageInput.disabled = false; 
         }
-        cartTotal.textContent = `Rp${total.toLocaleString('id-ID', { minimumFractionDigits: 2 })}`;
+        
+        for (const productId in cart) {
+            const item = cart[productId];
+            const itemSubtotal = item.price * item.quantity;
+            subtotalBeforeDiscount += itemSubtotal;
+
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+            li.innerHTML = `
+                <div>
+                    <strong class="text-dark">${item.name}</strong> 
+                    <span class="badge bg-secondary rounded-pill ms-1">${item.quantity}x</span>
+                    <span class="badge bg-info">${item.unit}</span>
+                    <br>
+                    <small class="text-muted">${formatRupiah(item.price)} / ${item.unit}</small>
+                </div>
+                <div>
+                    <strong class="text-primary">${formatRupiah(itemSubtotal)}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-2 rounded-circle" onclick="removeFromCart('${productId}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            cartList.appendChild(li);
+        }
+        
+        subtotalBeforeDiscountDisplay.textContent = formatRupiah(subtotalBeforeDiscount);
+        calculateFinalTotal(); 
+        updateChangeDisplay(); 
 
         const itemsForFlask = Object.keys(cart).map(id => ({
             id: id,
             quantity: cart[id].quantity
         }));
         cartItemsInput.value = JSON.stringify(itemsForFlask);
+    }
+
+    function calculateFinalTotal() { 
+        const rawDiscountPercentage = discountPercentageInput.value;
+        const cleanedDiscount = rawDiscountPercentage.replace(/\./g, '').replace(/,/g, '.');
+        
+        discountPercentage = Number(cleanedDiscount);
+        if (isNaN(discountPercentage) || discountPercentage < 0 || discountPercentage > 100) {
+            discountPercentage = 0; 
+            discountPercentageInput.value = '0'; 
+            showFlashMessage('Persentase diskon harus angka antara 0 dan 100.', 'warning');
+        }
+
+        discountAmount = (subtotalBeforeDiscount * discountPercentage) / 100;
+        finalTotalAfterDiscount = subtotalBeforeDiscount - discountAmount;
+
+        discountAmountDisplay.textContent = formatRupiah(discountAmount);
+        cartTotal.textContent = formatRupiah(finalTotalAfterDiscount); 
+    }
+
+
+    function updateChangeDisplay() {
+        const rawAmount = amountPaidInput.value;
+        const cleanedAmount = rawAmount.replace(/\./g, '').replace(/,/g, '.');
+        amountPaid = Number(cleanedAmount); 
+        
+        if (isNaN(amountPaid)) {
+            amountPaid = 0;
+        }
+
+        change = amountPaid - finalTotalAfterDiscount; 
+        changeDisplay.textContent = formatRupiah(change);
+
+        if (Object.keys(cart).length > 0 && amountPaid >= finalTotalAfterDiscount && amountPaid > 0) {
+            checkoutButton.disabled = false;
+            checkoutButton.classList.remove('btn-secondary');
+            checkoutButton.classList.add('btn-success');
+        } else {
+            checkoutButton.disabled = true;
+            checkoutButton.classList.remove('btn-success');
+            checkoutButton.classList.add('btn-secondary');
+        }
     }
 
     function addToCart(productId, name, price, stock, unit) {
@@ -196,11 +287,27 @@
     });
 
     productSearchInput.addEventListener('keyup', function() {
-        const searchTerm = productSearchInput.value.toLowerCase();
+        const searchTerm = productSearchInput.value.toLowerCase().trim();
+        const searchKeywords = searchTerm.split(/\s+/).filter(Boolean);
+        
         productItems.forEach(item => {
             const productName = item.dataset.productName.toLowerCase();
             const productUnit = item.dataset.productUnit.toLowerCase();
-            if (productName.includes(searchTerm) || productUnit.includes(searchTerm)) {
+            const productText = `${productName} ${productUnit}`; 
+
+            let isMatch = true;
+            if (searchKeywords.length > 0) {
+                for (const keyword of searchKeywords) {
+                    if (!productText.includes(keyword)) {
+                        isMatch = false;
+                        break;
+                    }
+                }
+            } else {
+                isMatch = true;
+            }
+
+            if (isMatch) {
                 item.style.display = 'flex';
             } else {
                 item.style.display = 'none';
@@ -215,6 +322,58 @@
         });
     });
 
-    document.addEventListener('DOMContentLoaded', updateCartDisplay);
+    amountPaidInput.addEventListener('input', updateChangeDisplay);
+    discountPercentageInput.addEventListener('input', function() { 
+        calculateFinalTotal(); // Hitung ulang total saat diskon berubah
+        updateChangeDisplay(); // Perbarui tampilan kembalian dan tombol checkout
+    });
+
+    sellForm.addEventListener('submit', function(event) {
+        updateChangeDisplay(); 
+
+        if (Object.keys(cart).length === 0) {
+            showFlashMessage('Keranjang kosong. Tidak bisa proses pembayaran.', 'danger');
+            event.preventDefault(); 
+            return;
+        }
+
+        const rawAmount = amountPaidInput.value;
+        const cleanedAmount = rawAmount.replace(/\./g, '').replace(/,/g, '.');
+        const parsedAmount = parseFloat(cleanedAmount);
+
+        // --- NEW: LOGGING DEBUG DI SINI ---
+        console.log("--- DEBUGGING FORM SUBMIT ---");
+        console.log("Cart Items JSON:", cartItemsInput.value);
+        console.log("Selected Customer ID:", selectedCustomerIdInput.value);
+        console.log("Discount Percentage Input:", discountPercentageInput.value); // Debug diskon
+        console.log("Raw Amount Paid Input (on submit):", rawAmount);
+        console.log("Cleaned Amount (on submit):", cleanedAmount);
+        console.log("Parsed Amount (on submit):", parsedAmount);
+        console.log("Subtotal Before Discount:", subtotalBeforeDiscount);
+        console.log("Discount Percentage (JS var):", discountPercentage);
+        console.log("Discount Amount (JS var):", discountAmount);
+        console.log("Final Total After Discount:", finalTotalAfterDiscount); // Debug total akhir
+        console.log("----------------------------");
+
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            showFlashMessage('Uang yang dibayarkan harus berupa angka positif dan valid.', 'danger');
+            amountPaidInput.focus();
+            event.preventDefault();
+            return;
+        }
+
+        if (parsedAmount < finalTotalAfterDiscount) { 
+            showFlashMessage(`Uang yang dibayarkan (${formatRupiah(parsedAmount)}) kurang dari total belanja (${formatRupiah(finalTotalAfterDiscount)}).`, 'danger');
+            amountPaidInput.focus();
+            event.preventDefault(); 
+            return;
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCartDisplay();
+        calculateFinalTotal(); 
+        updateChangeDisplay(); 
+    });
 </script>
 {% endblock %}

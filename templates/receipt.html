@@ -11,7 +11,7 @@
             font-family: 'Inter', monospace;
             font-size: 0.9em;
             margin: 0;
-            background-color: #f0f2f5; /* Latar belakang abu-abu terang */
+            background-color: #f0f2f5;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -19,13 +19,13 @@
         }
         .receipt-container {
             max-width: 380px;
-            width: 100%; /* Memastikan responsif */
+            width: 100%;
             border: none;
             padding: 25px;
             background-color: #fff;
             box-shadow: 0 8px 16px rgba(0,0,0,0.15);
             border-radius: 12px;
-            line-height: 1.4; /* Meningkatkan keterbacaan */
+            line-height: 1.4;
         }
         .receipt-header, .receipt-footer {
             text-align: center;
@@ -70,14 +70,31 @@
             color: #495057;
             margin-left: 10px;
         }
-        .total-section {
-            text-align: right;
+        .summary-section { /* NEW: General section for all summary items */
+            padding-top: 10px;
+            border-top: 1px dashed #ced4da;
+            margin-top: 10px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.95em;
+        }
+        .summary-row.total {
+            font-size: 1.3em;
             font-weight: bold;
-            font-size: 1.6em; /* Lebih besar untuk total */
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 3px solid #343a40;
-            color: #10b981; /* Warna hijau untuk total */
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #343a40;
+            color: #10b981;
+        }
+        .payment-details {
+            text-align: right;
+            font-size: 0.9em;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ced4da;
         }
         .thank-you {
             margin-top: 25px;
@@ -123,7 +140,7 @@
     <div class="receipt-container">
         <div class="receipt-header">
             <h5>TOKO EKA SAPUTRA</h5>
-            <p>Jalan Raya Binong No. 45, Kota Tangerang</p>
+            <p>Jalan Raya Binong No. 45, Kec.Curug, Kab.Tangerang, 15810</p>
             <p>Telp: 0895701060973</p>
             <hr class="my-2">
             <p class="h6 text-uppercase fw-bold">Struk Pembelian</p>
@@ -148,9 +165,27 @@
             {% endfor %}
         </ul>
 
-        <div class="total-section">
-            <span class="me-2 text-dark">TOTAL:</span>
-            <span>Rp{{ "{:,.2f}".format(sale.total_amount) }}</span>
+        {# NEW: Bagian Ringkasan Total dan Diskon #}
+        <div class="summary-section">
+            <div class="summary-row">
+                <span>Subtotal:</span>
+                <span class="fw-bold">Rp{{ "{:,.2f}".format(sale.get('subtotal_before_discount', sale.total_amount)) }}</span>
+            </div>
+            {% if sale.get('discount_percentage', 0) > 0 %}
+            <div class="summary-row text-danger">
+                <span>Diskon ({{ "{:,.0f}".format(sale.discount_percentage) }}%):</span>
+                <span class="fw-bold">-Rp{{ "{:,.2f}".format(sale.get('discount_amount', 0)) }}</span>
+            </div>
+            {% endif %}
+            <div class="summary-row total">
+                <span>TOTAL:</span>
+                <span>Rp{{ "{:,.2f}".format(sale.total_amount) }}</span>
+            </div>
+        </div>
+
+        <div class="payment-details">
+            <p class="mb-1">Dibayar: <span class="fw-bold">Rp{{ "{:,.2f}".format(sale.get('amount_paid', 0)) }}</span></p>
+            <p class="mb-0">Kembalian: <span class="fw-bold text-success">Rp{{ "{:,.2f}".format(sale.get('change', 0)) }}</span></p>
         </div>
 
         <div class="receipt-footer">

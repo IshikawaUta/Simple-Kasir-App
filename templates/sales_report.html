@@ -39,7 +39,12 @@
                             <th class="py-3 px-4">Kasir</th>
                             <th class="py-3 px-4">Pelanggan</th>
                             <th class="py-3 px-4">Produk</th>
-                            <th class="py-3 px-4">Total</th>
+                            <th class="py-3 px-4">Subtotal</th> {# NEW #}
+                            <th class="py-3 px-4">Diskon (%)</th> {# NEW #}
+                            <th class="py-3 px-4">Jumlah Diskon</th> {# NEW #}
+                            <th class="py-3 px-4">Total Akhir</th> {# Rename from Total #}
+                            <th class="py-3 px-4">Dibayar</th>
+                            <th class="py-3 px-4">Kembalian</th>
                             <th class="py-3 px-4">Aksi</th>
                         </tr>
                     </thead>
@@ -57,7 +62,12 @@
                                     {% endfor %}
                                 </ul>
                             </td>
+                            <td class="py-3 px-4">Rp{{ "{:,.2f}".format(sale.get('subtotal_before_discount', sale.total_amount)) }}</td> {# NEW #}
+                            <td class="py-3 px-4">{{ "{:,.0f}".format(sale.get('discount_percentage', 0)) }}%</td> {# NEW #}
+                            <td class="py-3 px-4 text-danger">-Rp{{ "{:,.2f}".format(sale.get('discount_amount', 0)) }}</td> {# NEW #}
                             <td class="py-3 px-4 text-success fw-bold">Rp{{ "{:,.2f}".format(sale.total_amount) }}</td>
+                            <td class="py-3 px-4">Rp{{ "{:,.2f}".format(sale.get('amount_paid', 0)) }}</td>
+                            <td class="py-3 px-4">Rp{{ "{:,.2f}".format(sale.get('change', 0)) }}</td>
                             <td class="py-3 px-4">
                                 <a href="{{ url_for('view_receipt', sale_id=sale._id) }}" target="_blank" class="btn btn-sm btn-info">Lihat Struk</a>
                             </td>
